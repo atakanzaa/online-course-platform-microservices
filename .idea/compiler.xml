@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="demo (5) (discovery-server)" />
+        <module name="demo (1) (analytics-service)" />
+        <module name="demo (9) (user-service)" />
+        <module name="demo (3) (config-server)" />
+        <module name="demo (6) (media-service)" />
+        <module name="common-lib" />
+        <module name="demo (7) (notification-service)" />
+        <module name="demo (8) (payment-service)" />
+        <module name="demo (2) (api-gateway)" />
+        <module name="demo (4) (course-service)" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="demo (1) (analytics-service)" options="-parameters" />
+      <module name="demo (2) (api-gateway)" options="-parameters" />
+      <module name="demo (3) (config-server)" options="-parameters" />
+      <module name="demo (4) (course-service)" options="-parameters" />
+      <module name="demo (5) (discovery-server)" options="-parameters" />
+      <module name="demo (6) (media-service)" options="-parameters" />
+      <module name="demo (7) (notification-service)" options="-parameters" />
+      <module name="demo (8) (payment-service)" options="-parameters" />
+      <module name="demo (9) (user-service)" options="-parameters" />
+    </option>
+  </component>
+</project>

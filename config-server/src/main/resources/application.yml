@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: dev
+  
+  # Config Server Configuration
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${CONFIG_REPO_URI:https://github.com/yourusername/online-course-platform-config}
+          default-label: ${CONFIG_REPO_BRANCH:main}
+          search-paths: '{application},{application}/{profile}'
+          clone-on-start: true
+          timeout: 10
+        encrypt:
+          enabled: false
+        health:
+          repositories:
+            check:
+              enabled: true
+
+  # RabbitMQ Configuration (for config change events)
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+  # Kafka Configuration (for config change notifications)
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  # Security Configuration
+  security:
+    user:
+      name: ${CONFIG_SERVER_USERNAME:admin}
+      password: ${CONFIG_SERVER_PASSWORD:admin123}
+      roles: ADMIN
+
+server:
+  port: 8888
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    enabled: false  # Disable for standalone development
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,configprops
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    org.springframework.cloud.config: DEBUG
+    org.springframework.cloud.netflix.eureka: DEBUG
+    org.springframework.kafka: INFO
+    org.springframework.amqp: INFO
+    org.eclipse.jgit: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Application Specific Configuration
+encrypt:
+  key: ${ENCRYPT_KEY:online-course-platform-secret-key}
+
+app:
+  config:
+    refresh:
+      rate: 30
+    backup:
+      enabled: true

@@ -1,0 +1,207 @@
+spring:
+  application:
+    name: media-service
+  profiles:
+    active: dev
+    
+  # Database Configuration - H2 for development
+  datasource:
+    url: jdbc:h2:mem:mediadb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+  
+  # Cloud Configuration
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    compatibility-verifier:
+      enabled: false
+  
+  # File Upload Configuration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+      file-size-threshold: 2KB
+  
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    connection-timeout: 30000
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000
+        max-attempts: 3
+        max-interval: 10000
+        multiplier: 1.0
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 1
+      buffer-memory: 33554432
+    consumer:
+      group-id: media-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      auto-commit-interval: 1000
+      properties:
+        spring.json.trusted.packages: "*"
+
+server:
+  port: 8085
+  servlet:
+    context-path: /media-service
+
+# Eureka Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    enabled: false  # Disable for standalone development
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    metadata-map:
+      version: 1.0
+      profile: ${spring.profiles.active}
+
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,beans
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  health:
+    rabbit:
+      enabled: false  # Disable for development
+    diskspace:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    media_service: DEBUG
+    org.springframework.cloud: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.kafka: INFO
+    org.springframework.amqp: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      course-service:
+        register-health-indicator: true
+        sliding-window-size: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 10s
+        failure-rate-threshold: 50
+        record-health-indicator: true
+      storage-service:
+        register-health-indicator: true
+        sliding-window-size: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 30s
+        failure-rate-threshold: 60
+        record-health-indicator: true
+  retry:
+    instances:
+      course-service:
+        max-attempts: 3
+        wait-duration: 1s
+      storage-service:
+        max-attempts: 2
+        wait-duration: 2s
+
+# Application Specific Configuration
+app:
+  media:
+    upload:
+      path: ${UPLOAD_PATH:./uploads}
+      max-size: 104857600  # 100MB
+      allowed-types: 
+        - image/jpeg
+        - image/png
+        - image/gif
+        - video/mp4
+        - video/avi
+        - video/mov
+        - application/pdf
+        - application/msword
+        - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    storage:
+      type: local  # local, aws-s3, azure-blob, gcp-storage
+      aws:
+        access-key: ${AWS_ACCESS_KEY:}
+        secret-key: ${AWS_SECRET_KEY:}
+        bucket: ${AWS_BUCKET:}
+        region: ${AWS_REGION:us-east-1}
+      azure:
+        connection-string: ${AZURE_STORAGE_CONNECTION:}
+        container: ${AZURE_CONTAINER:}
+      gcp:
+        project-id: ${GCP_PROJECT_ID:}
+        bucket: ${GCP_BUCKET:}
+    thumbnail:
+      enabled: true
+      width: 300
+      height: 200
+      quality: 0.8
+    video:
+      processing:
+        enabled: false
+        ffmpeg-path: ${FFMPEG_PATH:/usr/bin/ffmpeg}
+  cache:
+    ttl: 3600
+  security:
+    allowed-origins: "*"
