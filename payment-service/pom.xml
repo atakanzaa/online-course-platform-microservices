@@ -57,10 +57,7 @@
 		</dependency>
 		
 		<!-- Messaging Dependencies -->
-		<dependency>
-			<groupId>org.springframework.kafka</groupId>
-			<artifactId>spring-kafka</artifactId>
-		</dependency>
+		
 		
 		<!-- Circuit Breaker -->
 		<dependency>

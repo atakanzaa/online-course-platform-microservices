@@ -7,9 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import payment_service.dto.*;
 import payment_service.entity.Payment;
 import payment_service.entity.PaymentStatus;
+import payment_service.event.PaymentSuccessEvent;
 import payment_service.repository.PaymentRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,18 +20,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
-    
-    private final PaymentRepository paymentRepository;
+      private final PaymentRepository paymentRepository;
     private final IyzicoApiService iyzicoApiService;
     private final CourseService courseService;
+    private final PaymentEventService paymentEventService;
     
     @Transactional
     public PaymentResponse processPayment(PaymentRequest request) {
-        try {
-            // Kurs bilgilerini course-service'den al
+        try {            // Kurs bilgilerini course-service'den al
             CourseDto course = courseService.getCourse(request.getCourseId());
             if (course == null) {
-                throw new RuntimeException("Course not found with id: " + request.getCourseId());
+                throw new RuntimeException("Course not found or course service is currently unavailable. Please try again later.");
             }
             
             if (!course.isPublished()) {
@@ -78,13 +79,27 @@ public class PaymentService {
             
             // İyzico'ya ödeme isteği gönder
             IyzicoPaymentResponse iyzicoResponse = iyzicoApiService.createPayment(iyzicoRequest);
-            
-            // Yanıta göre payment durumunu güncelle
+              // Yanıta göre payment durumunu güncelle
             if ("success".equals(iyzicoResponse.getStatus()) && 
                 "SUCCESS".equals(iyzicoResponse.getPaymentStatus())) {
                 
                 payment.setStatus(PaymentStatus.SUCCESS);
                 payment.setTransactionId(iyzicoResponse.getPaymentId());
+                payment = paymentRepository.save(payment);
+                
+                // Ödeme başarılı olduğunda Kafka event'i yayınla
+                PaymentSuccessEvent event = PaymentSuccessEvent.builder()
+                        .paymentId(payment.getId().toString())
+                        .userId(payment.getUserId().toString())
+                        .courseId(payment.getCourseId().toString())
+                        .amount(payment.getAmount())
+                        .currency("TRY")
+                        .paymentDate(LocalDateTime.now())
+                        .iyzicoPaymentId(iyzicoResponse.getPaymentId())
+                        .iyzicoConversationId(iyzicoRequest.getConversationId())
+                        .build();
+                
+                paymentEventService.publishPaymentSuccessEvent(event);
                 
             } else {
                 payment.setStatus(PaymentStatus.FAILED);
