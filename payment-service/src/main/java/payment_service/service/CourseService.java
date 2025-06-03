@@ -18,8 +18,7 @@ import payment_service.dto.CourseDto;
 public class CourseService {
     
     private final RestTemplate restTemplate;
-    
-    @Value("${course-service.url:http://localhost:8082}")
+      @Value("${app.course-service.base-url:http://localhost:8082/course-service}")
     private String courseServiceUrl;
       /**
      * Kurs bilgilerini getirir
