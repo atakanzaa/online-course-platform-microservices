@@ -17,9 +17,7 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
-
-    @Transactional
+    private final JwtUtil jwtUtil;    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");
@@ -27,13 +25,17 @@ public class UserService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already in use");
         }
+        
+        // Set default role to STUDENT if not provided
+        Role userRole = request.getRole() != null ? request.getRole() : Role.STUDENT;
+        
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .role(Role.STUDENT)
+                .role(userRole)
                 .build();
         userRepository.save(user);
         String accessToken = jwtUtil.generateToken(user.getUsername(), user.getRole().name(), user.getId());

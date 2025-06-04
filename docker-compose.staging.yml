@@ -1,0 +1,404 @@
+# Docker Compose for Staging Environment
+# Online Course Platform Microservices
+
+version: '3.8'
+
+networks:
+  course-platform-staging:
+    driver: bridge
+
+volumes:
+  postgres-data-staging:
+  redis-data-staging:
+  media-storage-staging:
+  prometheus-data-staging:
+  grafana-data-staging:
+
+services:
+  # ==================== DATABASES ====================
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-staging
+    environment:
+      POSTGRES_DB: course_platform_staging
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
+      POSTGRES_MULTIPLE_DATABASES: user_service,course_service,payment_service,notification_service,media_service,analytics_service
+    volumes:
+      - postgres-data-staging:/var/lib/postgresql/data
+      - ./scripts/database:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - course-platform-staging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d course_platform_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-staging
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-staging_redis_pass}
+    volumes:
+      - redis-data-staging:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - course-platform-staging
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-staging
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-staging_rabbit_pass}
+      RABBITMQ_DEFAULT_VHOST: course_platform_staging
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - course-platform-staging
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # ==================== INFRASTRUCTURE SERVICES ====================
+
+  config-server:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/config-server:${APP_VERSION:-latest}
+    container_name: config-server-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_GIT_URI}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: ${CONFIG_GIT_USERNAME}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: ${CONFIG_GIT_PASSWORD}
+    ports:
+      - "8888:8888"
+    networks:
+      - course-platform-staging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  discovery-server:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/discovery-server:${APP_VERSION:-latest}
+    container_name: discovery-server-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    ports:
+      - "8761:8761"
+    networks:
+      - course-platform-staging
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  api-gateway:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/api-gateway:${APP_VERSION:-latest}
+    container_name: api-gateway-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8080:8080"
+    networks:
+      - course-platform-staging
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ==================== MICROSERVICES ====================
+  user-service:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/user-service:${APP_VERSION:-latest}
+    container_name: user-service-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_service
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-staging_redis_pass}
+    networks:
+      - course-platform-staging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  course-service:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/course-service:${APP_VERSION:-latest}
+    container_name: course-service-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/course_service
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-staging_redis_pass}
+    networks:
+      - course-platform-staging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  payment-service:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/payment-service:${APP_VERSION:-latest}
+    container_name: payment-service-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_service
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-staging_redis_pass}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-staging_rabbit_pass}
+    networks:
+      - course-platform-staging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  notification-service:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/notification-service:${APP_VERSION:-latest}
+    container_name: notification-service-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_service
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-staging_rabbit_pass}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY_STAGING}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID_STAGING}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN_STAGING}
+    networks:
+      - course-platform-staging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  media-service:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/media-service:${APP_VERSION:-latest}
+    container_name: media-service-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/media_service
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID_STAGING}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY_STAGING}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET_STAGING}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+    volumes:
+      - media-storage-staging:/app/media
+    networks:
+      - course-platform-staging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  analytics-service:
+    image: ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/analytics-service:${APP_VERSION:-latest}
+    container_name: analytics-service-staging
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/analytics_service
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-staging_redis_pass}
+    networks:
+      - course-platform-staging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ==================== MONITORING ====================
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus-staging
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus-data-staging:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - course-platform-staging
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: grafana-staging
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-staging_grafana_pass}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana-data-staging:/var/lib/grafana
+      - ./monitoring/grafana-dashboard-microservices.json:/var/lib/grafana/dashboards/microservices.json
+      - ./monitoring/grafana-dashboard-business.json:/var/lib/grafana/dashboards/business.json
+    ports:
+      - "3000:3000"
+    networks:
+      - course-platform-staging
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # ==================== LOGGING ====================
+
+  elasticsearch:
+    image: elasticsearch:8.9.0
+    container_name: elasticsearch-staging
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    networks:
+      - course-platform-staging
+    restart: unless-stopped
+
+  kibana:
+    image: kibana:8.9.0
+    container_name: kibana-staging
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - course-platform-staging
+    depends_on:
+      - elasticsearch    restart: unless-stopped

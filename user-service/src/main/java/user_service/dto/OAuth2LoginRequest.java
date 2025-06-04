@@ -6,20 +6,21 @@ import lombok.Data;
 import user_service.entity.Role;
 
 @Data
-public class RegisterRequest {
-    @NotBlank(message = "Username is required")
-    private String username;
-
+public class OAuth2LoginRequest {
+    @NotBlank(message = "Google ID token is required")
+    private String idToken;
+    
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
-
-    @NotBlank(message = "Password is required")
-    private String password;
-
+    
+    @NotBlank(message = "Name is required")
+    private String name;
+    
     private String firstName;
     private String lastName;
+    private String profileImage;
     
-    // Role selection - defaults to STUDENT if not provided
+    // Role selection for new users - defaults to STUDENT if not provided
     private Role role;
 }
