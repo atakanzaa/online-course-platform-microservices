@@ -147,7 +147,8 @@ services:
         reservations:
           memory: 256M
 
-  # Application Services  config-server:
+  # Application Services
+  config-server:
     image: ${CI_REGISTRY_IMAGE}/config-server:${IMAGE_TAG:-latest}
     ports:
       - "8888:8888"
