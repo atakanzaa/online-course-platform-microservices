@@ -26,7 +26,7 @@
         <module>payment-service</module>
         <module>notification-service</module>
         <module>media-service</module>
-        <module>analytics-service</module>
+
     </modules>
 
     <properties>
