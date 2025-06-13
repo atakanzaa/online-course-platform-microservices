@@ -2,8 +2,8 @@ package user_service.security;
 
 import io.jsonwebtoken.*;
 import org.springframework.stereotype.Component;
-import io.jsonwebtoken.impl.TextCodec;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -15,7 +15,7 @@ public class JwtUtil {
     private final long refreshExpirationMs = 604800000; // 7 days
 
     private byte[] getSigningKey() {
-        return TextCodec.BASE64.decode(jwtSecret);
+        return Base64.getDecoder().decode(jwtSecret);
     }
 
     public String generateToken(String username, String role, Long userId) {
@@ -33,38 +33,51 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
-                .signWith(SignatureAlgorithm.HS256, getSigningKey())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))                .signWith(SignatureAlgorithm.HS256, getSigningKey())
                 .compact();
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(getSigningKey()).parseClaimsJws(token);
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
+            Jwts.parser()
+                .setSigningKey(getSigningKey())
+                .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
+            return false;        }
     }
 
     public String extractUsername(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return null;
+        }
         return extractClaim(token, Claims::getSubject);
     }
 
     public String extractRole(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return null;
+        }
         return extractAllClaims(token).get("role", String.class);
     }
 
     public Long extractUserId(String token) {
-        return extractAllClaims(token).get("userId", Long.class);
+        if (token == null || token.trim().isEmpty()) {
+            return null;
+        }        return extractAllClaims(token).get("userId", Long.class);
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+        final Claims claims = extractAllClaims(token);        return claimsResolver.apply(claims);
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(getSigningKey()).parseClaimsJws(token).getBody();
+        return Jwts.parser()
+                .setSigningKey(getSigningKey())
+                .parseClaimsJws(token)
+                .getBody();
     }
-} 
+}

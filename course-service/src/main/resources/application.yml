@@ -104,9 +104,9 @@ management:
   endpoint:
     health:
       show-details: always
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
   health:
     rabbit:
@@ -133,19 +133,19 @@ resilience4j:
   circuitbreaker:
     instances:
       payment-service:
-        register-health-indicator: true
+        registerHealthIndicator: true
         sliding-window-size: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        wait-duration-in-open-state: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
         failure-rate-threshold: 50
-        record-health-indicator: true
+    
       user-service:
-        register-health-indicator: true
+        registerHealthIndicator: true
         sliding-window-size: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        wait-duration-in-open-state: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
         failure-rate-threshold: 50
-        record-health-indicator: true
+  
   retry:
     instances:
       payment-service:

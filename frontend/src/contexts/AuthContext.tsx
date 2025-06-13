@@ -67,11 +67,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
   }, []);
-
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login({ email, password });
-      const { user, token } = response;
+      
+      // Create user object from response
+      const user = {
+        id: response.userId.toString(),
+        email: response.email,
+        firstName: '', // We don't have firstName from login response
+        lastName: '',  // We don't have lastName from login response
+        role: response.role as 'STUDENT' | 'INSTRUCTOR' | 'ADMIN',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      const token = response.accessToken;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -86,7 +97,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
   const register = async (
     firstName: string,
     lastName: string,
@@ -102,7 +112,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password,
         role,
       });
-      const { user, token } = response;
+      
+      // Create user object from response
+      const user = {
+        id: response.userId.toString(),
+        email: response.email,
+        firstName: firstName,
+        lastName: lastName,
+        role: response.role as 'STUDENT' | 'INSTRUCTOR' | 'ADMIN',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      const token = response.accessToken;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));

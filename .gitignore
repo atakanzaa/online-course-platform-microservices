@@ -39,8 +39,14 @@ temp/
 
 # Environment variables
 .env
+.env.*
 .env.local
+.env.development
+.env.staging
 .env.production
+setup-env.ps1
+*oauth*.md
+OAUTH_*.md
 
 # H2 Database
 *.db

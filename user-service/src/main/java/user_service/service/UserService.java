@@ -22,7 +22,19 @@ public class UserService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");
         }
-        if (userRepository.existsByUsername(request.getUsername())) {
+        
+        // Auto-generate username from email if not provided
+        String username = request.getUsername();
+        if (username == null || username.trim().isEmpty()) {
+            username = request.getEmail().split("@")[0];
+            // Ensure username is unique by adding numbers if needed
+            String baseUsername = username;
+            int counter = 1;
+            while (userRepository.existsByUsername(username)) {
+                username = baseUsername + counter;
+                counter++;
+            }
+        } else if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already in use");
         }
         
@@ -30,7 +42,7 @@ public class UserService {
         Role userRole = request.getRole() != null ? request.getRole() : Role.STUDENT;
         
         User user = User.builder()
-                .username(request.getUsername())
+                .username(username)
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())

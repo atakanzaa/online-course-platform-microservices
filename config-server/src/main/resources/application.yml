@@ -18,8 +18,7 @@ spring:
           enabled: false
         health:
           repositories:
-            check:
-              enabled: true
+            enabled: true
 
   # RabbitMQ Configuration (for config change events)
   rabbitmq:

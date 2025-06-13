@@ -104,9 +104,9 @@ management:
   endpoint:
     health:
       show-details: always
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
   health:
     rabbit:
@@ -134,26 +134,23 @@ resilience4j:
   circuitbreaker:
     instances:
       course-service:
-        register-health-indicator: true
-        sliding-window-size: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        wait-duration-in-open-state: 10s
-        failure-rate-threshold: 50
-        record-health-indicator: true
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
       user-service:
-        register-health-indicator: true
-        sliding-window-size: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        wait-duration-in-open-state: 10s
-        failure-rate-threshold: 50
-        record-health-indicator: true
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
       iyzico-api:
-        register-health-indicator: true
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 60
-        record-health-indicator: true
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 60
   retry:
     instances:
       course-service:
@@ -168,8 +165,8 @@ resilience4j:
 
 # İyzico Configuration (Test Environment)
 iyzico:
-  api-key: sandbox-4bcle5UPLg1IDcw6XXZq0BLS9k0fKoDy
-  secret-key: sandbox-UWjM9xYqT7XFZINo5vDByw3T3VU8a62n
+  api-key: ${IYZICO_API_KEY:sandbox-4bcle5UPLg1IDcw6XXZq0BLS9k0fKoDy}
+  secret-key: ${IYZICO_SECRET_KEY:sandbox-UWjM9xYqT7XFZINo5vDByw3T3VU8a62n}
   base-url: https://sandbox-api.iyzipay.com
   sandbox-mode: true
   timeout: 30000

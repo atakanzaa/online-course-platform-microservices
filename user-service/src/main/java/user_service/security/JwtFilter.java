@@ -26,11 +26,20 @@ public class JwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
         String username = null;
-        String jwt = null;
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        String jwt = null;        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
-            username = jwtUtil.extractUsername(jwt);
+            // Only try to extract username if jwt is not null or empty
+            if (jwt != null && !jwt.trim().isEmpty()) {
+                try {
+                    username = jwtUtil.extractUsername(jwt);
+                } catch (Exception e) {
+                    // Invalid JWT, ignore and continue
+                    jwt = null;
+                    username = null;
+                }
+            } else {
+                jwt = null;
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {

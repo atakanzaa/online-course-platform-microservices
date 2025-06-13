@@ -7,7 +7,7 @@ import user_service.entity.Role;
 
 @Data
 public class RegisterRequest {
-    @NotBlank(message = "Username is required")
+    // Username is optional - will be auto-generated from email if not provided
     private String username;
 
     @NotBlank(message = "Email is required")

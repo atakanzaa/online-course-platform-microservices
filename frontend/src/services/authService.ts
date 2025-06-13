@@ -15,19 +15,23 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  user: User;
-  token: string;
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  userId: number;
+  username: string;
+  email: string;
+  role: string;
 }
 
-export const authService = {
-  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
-    return response.data.data;
+export const authService = {  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/login', credentials);
+    return response.data;
   },
 
   register: async (userData: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', userData);
-    return response.data.data;
+    const response = await api.post<AuthResponse>('/auth/register', userData);
+    return response.data;
   },
 
   logout: async (): Promise<void> => {
