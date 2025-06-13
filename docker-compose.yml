@@ -5,8 +5,8 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
       POSTGRES_MULTIPLE_DATABASES: userdb,coursedb,paymentdb,notificationdb,mediadb
     ports:
       - "5432:5432"
