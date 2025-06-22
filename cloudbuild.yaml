@@ -1,29 +1,55 @@
 # Google Cloud Build configuration
-# Builds Docker image for API Gateway and pushes to Artifact Registry
-# Adjust _SERVICES list to include other micro-services.
+# Builds/pushes all microservice images and deploys to Cloud Run
+# Branch-based triggers will override the _ENV substitution (dev|staging|prod)
 
 substitutions:
-  _REG: "europe-docker.pkg.dev/$PROJECT_ID/ocp"
-  _TAG: "$SHORT_SHA"
-  _SERVICES: "api-gateway,user-service,course-service"
+  _REGION: europe-west3
+  _REPO: online-platform
+  _REG: '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}'
+  _TAG: '$SHORT_SHA'
+  _SERVICES: 'api-gateway,user-service,course-service,media-service,payment-service,notification-service'
+  _ENV: 'dev'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  substitution_option: ALLOW_LOOSE
+  machineType: 'E2_HIGHCPU_8'
 
 steps:
-# Loop over services (single service list split by comma)
-- name: 'gcr.io/cloud-builders/gcloud'
+# Build and push each service image
+- name: 'gcr.io/cloud-builders/docker'
   id: 'Build & Push images'
-  entrypoint: 'bash'
+  entrypoint: bash
   args:
-    - '-c'
+    - -c
     - |
-      IFS=',' read -ra SRVS <<< "${_SERVICES}";
+      set -e
+      IFS=',' read -ra SRVS <<< "${_SERVICES}"
       for svc in "${SRVS[@]}"; do
-        echo "\n### Building $svc ###";
-        docker build -t "${_REG}/${svc}:${_TAG}" "${svc}";
-        docker push "${_REG}/${svc}:${_TAG}";
+        echo "---- Building $svc ----"
+        docker build -t "${_REG}/${svc}:${_TAG}" "${svc}"
+        docker push "${_REG}/${svc}:${_TAG}"
+      done
+
+# Deploy each service to Cloud Run with environment suffix
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: 'Deploy Cloud Run'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      set -e
+      gcloud config set run/region ${_REGION}
+      IFS=',' read -ra SRVS <<< "${_SERVICES}"
+      for svc in "${SRVS[@]}"; do
+        NAME="${svc}-${_ENV}"
+        echo "---- Deploying $NAME ----"
+        gcloud run deploy "$NAME" \
+          --image "${_REG}/${svc}:${_TAG}" \
+          --platform managed \
+          --allow-unauthenticated \
+          --update-env-vars "SPRING_PROFILES_ACTIVE=${_ENV}"
       done
 
 images:
-- '${_REG}/api-gateway:${_TAG}'
-
-options:
-  logging: CLOUD_LOGGING_ONLY 
+  - '${_REG}/api-gateway:${_TAG}' 
