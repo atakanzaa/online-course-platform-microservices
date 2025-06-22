@@ -283,10 +283,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/media_service
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-staging_password}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID_STAGING}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY_STAGING}
-      AWS_S3_BUCKET: ${AWS_S3_BUCKET_STAGING}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
+      # GCP Storage
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID_STAGING}
+      GCP_BUCKET: ${GCP_BUCKET_STAGING}
     volumes:
       - media-storage-staging:/app/media
     networks:

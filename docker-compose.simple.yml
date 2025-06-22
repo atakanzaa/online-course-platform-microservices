@@ -190,10 +190,9 @@ services:
       - DATABASE_URL=${DATABASE_URL:-jdbc:postgresql://host.docker.internal:5432/mediadb}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      # GCP Storage (optional)
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCP_BUCKET=${GCP_BUCKET}
     depends_on:
       - rabbitmq
       - redis

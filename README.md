@@ -22,7 +22,7 @@ A comprehensive microservices-based online course platform with İyzico payment 
 - **Course Service** (8082): Course content, modules, lessons
 - **Payment Service** (8083): İyzico payment processing with 3DS
 - **Notification Service** (8084): Email, SMS, push notifications
-- **Media Service** (8085): File upload/download, AWS S3 integration
+- **Media Service** (8085): File upload/download, Google Cloud Storage integration
 - **Analytics Service** (8086): User behavior analytics
 
 ### Infrastructure

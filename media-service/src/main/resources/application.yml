@@ -199,18 +199,18 @@ app:
         - application/msword
         - application/vnd.openxmlformats-officedocument.wordprocessingml.document
     storage:
-      type: local  # local, aws-s3, azure-blob, gcp-storage
-      aws:
-        access-key: ${AWS_ACCESS_KEY:}
-        secret-key: ${AWS_SECRET_KEY:}
-        bucket: ${AWS_BUCKET:}
-        region: ${AWS_REGION:us-east-1}
+      type: gcp-storage  # local, gcp-storage, azure-blob
+      # aws:
+      #   access-key: ${AWS_ACCESS_KEY:}
+      #   secret-key: ${AWS_SECRET_KEY:}
+      #   bucket: ${AWS_BUCKET:}
+      #   region: ${AWS_REGION:us-east-1}
       azure:
         connection-string: ${AZURE_STORAGE_CONNECTION:}
         container: ${AZURE_CONTAINER:}
-      gcp:
-        project-id: ${GCP_PROJECT_ID:}
-        bucket: ${GCP_BUCKET:}
+        gcp:
+          project-id: ${GCP_PROJECT_ID:}
+          bucket: ${GCP_BUCKET:}
     thumbnail:
       enabled: true
       width: 300
