@@ -8,17 +8,17 @@ This project now follows a **dev-staging-prod** workflow with the following bran
 
 | Branch | Purpose | Environment | URL |
 |--------|---------|-------------|-----|
-| `production` | Production-ready code | Production | `https://courseplatform.com` |
-| `staging` | Pre-production testing | Staging | `https://staging.courseplatform.com` |
-| `development` | Active development | Development | Local development |
+| `main` | Production-ready code | **Production** | `https://courseplatform.com` |
+| `staging` | Test/QA environment | **Staging** | `https://staging.courseplatform.com` |
+| `develop` | Active development | **Development** | Local development |
 
 ### 🚀 Workflow
 
 ```
-development → staging → production
+develop → staging → main
 ```
 
-1. **Development Branch (`development`)**
+1. **Development Branch (`develop`)**
    - Used for active development and feature integration
    - All new features and bug fixes start here
    - Continuous integration testing
@@ -30,7 +30,7 @@ development → staging → production
    - Mirror of production environment with staging data
    - Final validation before production deployment
 
-3. **Production Branch (`production`)**
+3. **Production Branch (`main`)**
    - Live production environment
    - Only receives tested and approved code from staging
    - Production-ready code only
@@ -40,28 +40,24 @@ development → staging → production
 
 1. **Feature Development**
    ```bash
-   git checkout development
-   git pull origin development
+   git checkout develop
+   git pull origin develop
    git checkout -b feature/your-feature-name
    # ... develop your feature
    git push origin feature/your-feature-name
-   # Create PR to development branch
+   # Create PR to develop branch
    ```
 
 2. **Staging Deployment**
    ```bash
-   git checkout staging
-   git merge development
-   git push origin staging
-   # Automatic deployment to staging environment
+   # When a feature is ready on develop, it will be automatically built & deployed
+   # to the staging environment by the CI pipeline on each push.
    ```
 
 3. **Production Deployment**
    ```bash
-   git checkout production
-   git merge staging
-   git push origin production
-   # Manual deployment to production environment
+   # Merge develop → main (via PR)
+   # CI pipeline automatically deploys main to production.
    ```
 
 ### 🔐 Security Notes
@@ -83,8 +79,8 @@ Each environment should have its own configuration:
 
 The GitLab CI/CD pipeline is configured to:
 - Build and test on every commit
-- Deploy to staging when `development` branch is updated
-- Deploy to production when `production` branch is updated (manual approval required)
+- Deploy to staging when `develop` branch is updated
+- Deploy to production when `main` branch is updated (manual approval required)
 
 ### 🏗 Docker Compose Files
 
