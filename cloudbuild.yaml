@@ -5,9 +5,9 @@
 substitutions:
   _REGION: europe-west3
   _REPO: online-platform
-  _REG: '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}'
+  _REG: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}'
   _TAG: '$SHORT_SHA'
-  _SERVICES: 'api-gateway,user-service,course-service,media-service,payment-service,notification-service'
+  _SERVICES: 'api-gateway,discovery-server,user-service,course-service,media-service,payment-service,notification-service'
   _ENV: 'dev'
 
 options:
