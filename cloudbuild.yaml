@@ -1,0 +1,29 @@
+# Google Cloud Build configuration
+# Builds Docker image for API Gateway and pushes to Artifact Registry
+# Adjust _SERVICES list to include other micro-services.
+
+substitutions:
+  _REG: "europe-docker.pkg.dev/$PROJECT_ID/ocp"
+  _TAG: "$SHORT_SHA"
+  _SERVICES: "api-gateway,user-service,course-service"
+
+steps:
+# Loop over services (single service list split by comma)
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'Build & Push images'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      IFS=',' read -ra SRVS <<< "${_SERVICES}";
+      for svc in "${SRVS[@]}"; do
+        echo "\n### Building $svc ###";
+        docker build -t "${_REG}/${svc}:${_TAG}" "${svc}";
+        docker push "${_REG}/${svc}:${_TAG}";
+      done
+
+images:
+- '${_REG}/api-gateway:${_TAG}'
+
+options:
+  logging: CLOUD_LOGGING_ONLY 
