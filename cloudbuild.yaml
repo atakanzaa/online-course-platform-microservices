@@ -7,7 +7,7 @@ substitutions:
   _REPO: online-platform
   _REG: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}'
   _TAG: '$SHORT_SHA'
-  _SERVICES: 'api-gateway,discovery-server,user-service,course-service,media-service,payment-service,notification-service'
+  _SERVICES: 'api-gateway,user-service,course-service,media-service,payment-service,notification-service'
   _ENV: 'dev'
 
 options:
@@ -48,8 +48,13 @@ steps:
           --image "${_REG}/${svc}:${_TAG}" \
           --platform managed \
           --allow-unauthenticated \
-          --update-env-vars "SPRING_PROFILES_ACTIVE=${_ENV}"
+          --update-env-vars "SPRING_PROFILES_ACTIVE=${_ENV},SERVER_PORT=8080"
       done
 
 images:
-  - '${_REG}/api-gateway:${_TAG}' 
+  - '${_REG}/api-gateway:${_TAG}'
+  - '${_REG}/user-service:${_TAG}'
+  - '${_REG}/course-service:${_TAG}'
+  - '${_REG}/media-service:${_TAG}'
+  - '${_REG}/payment-service:${_TAG}'
+  - '${_REG}/notification-service:${_TAG}' 
