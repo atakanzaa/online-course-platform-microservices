@@ -43,8 +43,8 @@ steps:
       IFS=',' read -ra SRVS <<< "${_SERVICES}"
       for svc in "${SRVS[@]}"; do
         NAME="${svc}-${_ENV}"
-        echo "---- Deploying $NAME ----"
-        gcloud run deploy "$NAME" \
+        echo "---- Deploying $$NAME ----"
+        gcloud run deploy "$$NAME" \
           --image "${_REG}/${svc}:${_TAG}" \
           --platform managed \
           --allow-unauthenticated \
