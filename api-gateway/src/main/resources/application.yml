@@ -116,7 +116,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 # Eureka Configuration
 eureka:

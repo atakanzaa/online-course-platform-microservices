@@ -23,8 +23,8 @@ COPY src src
 # Build the application
 RUN ./mvnw clean package -DskipTests
 
-# Expose port
-EXPOSE 8082
+# Expose port expected by Cloud Run
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
