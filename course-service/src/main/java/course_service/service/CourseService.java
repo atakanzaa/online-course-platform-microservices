@@ -83,7 +83,18 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
         course.setPublished(published);
-        return courseRepository.save(course);    }
+        return courseRepository.save(course);    
+    }
+
+    public List<Course> getFeaturedCourses() {
+        // Return published courses as featured for now
+        return courseRepository.findByIsPublished(true);
+    }
+
+    public List<Course> getPopularCourses() {
+        // Return published courses as popular for now  
+        return courseRepository.findByIsPublished(true);
+    }
 
     // --- Mapping helpers ---
     private Course mapToCourse(CourseRequest request) {

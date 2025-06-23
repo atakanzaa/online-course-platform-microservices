@@ -44,6 +44,16 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getAllCourses());
     }
 
+    @GetMapping("/featured")
+    public ResponseEntity<List<Course>> getFeaturedCourses() {
+        return ResponseEntity.ok(courseService.getFeaturedCourses());
+    }
+
+    @GetMapping("/popular")
+    public ResponseEntity<List<Course>> getPopularCourses() {
+        return ResponseEntity.ok(courseService.getPopularCourses());
+    }
+
     @GetMapping("/instructor/{instructorId}")
     public ResponseEntity<List<Course>> getCoursesByInstructor(@PathVariable Long instructorId) {
         return ResponseEntity.ok(courseService.getCoursesByInstructor(instructorId));

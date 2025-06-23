@@ -23,6 +23,13 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: auth-service
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
         - id: course-service
           uri: ${COURSE_SERVICE_URL:http://localhost:8082}
           predicates:
