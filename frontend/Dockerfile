@@ -14,7 +14,7 @@ RUN npm ci --only=production
 COPY . .
 
 # Build arguments for environment variables
-ARG REACT_APP_API_URL=http://localhost:8080/api
+ARG REACT_APP_API_URL=https://api-gateway-dev-347659003886.europe-west3.run.app/api
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
 # Build the app
