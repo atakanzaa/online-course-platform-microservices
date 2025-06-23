@@ -70,8 +70,8 @@ public class CourseService {
         return courseRepository.findByCategoryIgnoreCase(category);
     }
 
-    public List<Course> getCoursesByPublished(boolean isPublished) {
-        return courseRepository.findByIsPublished(isPublished);
+    public List<Course> getCoursesByPublished(boolean published) {
+        return courseRepository.findByIsPublished(published);
     }
 
     public List<Course> searchCourses(String query) {
@@ -94,6 +94,10 @@ public class CourseService {
     public List<Course> getPopularCourses() {
         // Return published courses as popular for now  
         return courseRepository.findByIsPublished(true);
+    }
+
+    public List<String> getCategories() {
+        return courseRepository.findDistinctCategories();
     }
 
     // --- Mapping helpers ---

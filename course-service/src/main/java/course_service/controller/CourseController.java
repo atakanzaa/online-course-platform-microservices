@@ -78,4 +78,9 @@ public class CourseController {
     public ResponseEntity<Course> setPublished(@PathVariable Long id, @RequestParam boolean published) {
         return ResponseEntity.ok(courseService.setPublished(id, published));
     }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        return ResponseEntity.ok(courseService.getCategories());
+    }
 } 
