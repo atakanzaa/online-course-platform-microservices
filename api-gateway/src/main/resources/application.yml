@@ -3,6 +3,8 @@ spring:
     name: api-gateway
   profiles:
     active: dev
+  config:
+    import: "optional:configserver:"
   
   # Cloud Gateway Configuration
   cloud:
@@ -15,75 +17,43 @@ spring:
     gateway:
       routes:
         - id: user-service
-          uri: lb://user-service
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/users/**
           filters:
             - StripPrefix=1
-            - name: CircuitBreaker
-              args:
-                name: user-service
-                fallbackUri: forward:/fallback/user-service
 
         - id: course-service
-          uri: lb://course-service
+          uri: ${COURSE_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/courses/**
           filters:
             - StripPrefix=1
-            - name: CircuitBreaker
-              args:
-                name: course-service
-                fallbackUri: forward:/fallback/course-service
 
         - id: payment-service
-          uri: lb://payment-service
+          uri: ${PAYMENT_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/api/payments/**
           filters:
             - StripPrefix=1
-            - name: CircuitBreaker
-              args:
-                name: payment-service
-                fallbackUri: forward:/fallback/payment-service
 
         - id: media-service
-          uri: lb://media-service
+          uri: ${MEDIA_SERVICE_URL:http://localhost:8085}
           predicates:
             - Path=/api/media/**
           filters:
             - StripPrefix=1
-            - name: CircuitBreaker
-              args:
-                name: media-service
-                fallbackUri: forward:/fallback/media-service
-
-        - id: analytics-service
-          uri: lb://analytics-service
-          predicates:
-            - Path=/api/analytics/**
-          filters:
-            - StripPrefix=1
-            - name: CircuitBreaker
-              args:
-                name: analytics-service
-                fallbackUri: forward:/fallback/analytics-service
 
         - id: notification-service
-          uri: lb://notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8086}
           predicates:
             - Path=/api/notifications/**
           filters:
             - StripPrefix=1
-            - name: CircuitBreaker
-              args:
-                name: notification-service
-                fallbackUri: forward:/fallback/notification-service
 
       discovery:
         locator:
-          enabled: true
-          lower-case-service-id: true
+          enabled: false
       
       # Global CORS Configuration
       globalcors:
@@ -96,41 +66,12 @@ spring:
             allow-credentials: false
             max-age: 3600
 
-  # RabbitMQ Configuration
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    virtual-host: /
 
-  # Kafka Configuration
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      group-id: api-gateway-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
 server:
   port: ${PORT:8080}
 
-# Eureka Configuration
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-    enabled: false  # Disable for standalone development
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
-    lease-renewal-interval-in-seconds: 30
-    lease-expiration-duration-in-seconds: 90
+
 
 # Management & Actuator
 management:
@@ -154,74 +95,63 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.web.reactive: DEBUG
     org.springframework.cloud.loadbalancer: DEBUG
-    org.springframework.cloud.circuitbreaker: DEBUG
     reactor.netty: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
+# TODO: Add back when versions are compatible
 # Circuit Breaker Configuration
-resilience4j:
-  circuitbreaker:
-    instances:
-      user-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-        record-health-indicator: true
-      course-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-        record-health-indicator: true
-      payment-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-        record-health-indicator: true
-      media-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-        record-health-indicator: true
-      analytics-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-        record-health-indicator: true
-      notification-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        permitted-number-of-calls-in-half-open-state: 5
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-        record-health-indicator: true
-  timelimiter:
-    instances:
-      user-service:
-        timeout-duration: 5s
-      course-service:
-        timeout-duration: 5s
-      payment-service:
-        timeout-duration: 10s
-      media-service:
-        timeout-duration: 15s
-      analytics-service:
-        timeout-duration: 8s
-      notification-service:
-        timeout-duration: 3s
+# resilience4j:
+#   circuitbreaker:
+#     instances:
+#       user-service:
+#         slidingWindowSize: 10
+#         failureRateThreshold: 50
+#         waitDurationInOpenState: 30s
+#       course-service:
+#         slidingWindowSize: 10
+#         failureRateThreshold: 50
+#       payment-service:
+#         slidingWindowSize: 10
+#         failureRateThreshold: 50
+#       media-service:
+#         slidingWindowSize: 10
+#         failureRateThreshold: 50
+#       notification-service:
+#         slidingWindowSize: 10
+#         failureRateThreshold: 50
+#   timelimiter:
+#     instances:
+#       user-service:
+#         timeoutDuration: 5s
+#       course-service:
+#         timeoutDuration: 5s
+#       payment-service:
+#         timeoutDuration: 10s
+#       media-service:
+#         timeoutDuration: 15s
+#       notification-service:
+#         timeoutDuration: 3s
 
+# TODO: Add back when Redis is available
 # Rate Limiting Configuration
-spring.cloud.gateway.filter.rate-limit:
-  redis-rate-limiter:
-    replenish-rate: 10
-    burst-capacity: 20
+# spring:
+#   cloud:
+#     gateway:
+#       filter:
+#         rate-limit:
+#           redis-rate-limiter:
+#             replenish-rate: 100
+#             burst-capacity: 200
+
+# TODO: Add back when moving to GKE with Eureka
+# Service Discovery Configuration  
+# eureka:
+#   client:
+#     service-url:
+#       defaultZone: http://eureka-server:8761/eureka/
+#     register-with-eureka: true
+#     fetch-registry: true
+
+
+
