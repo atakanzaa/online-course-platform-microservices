@@ -20,43 +20,37 @@ spring:
           uri: ${USER_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/users/**
-          filters:
-            - StripPrefix=1
+          filters: []
 
         - id: auth-service
           uri: ${USER_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
+          filters: []
 
         - id: course-service
           uri: ${COURSE_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/courses/**
-          filters:
-            - StripPrefix=1
+          filters: []
 
         - id: payment-service
           uri: ${PAYMENT_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/api/payments/**
-          filters:
-            - StripPrefix=1
+          filters: []
 
         - id: media-service
           uri: ${MEDIA_SERVICE_URL:http://localhost:8085}
           predicates:
             - Path=/api/media/**
-          filters:
-            - StripPrefix=1
+          filters: []
 
         - id: notification-service
           uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8086}
           predicates:
             - Path=/api/notifications/**
-          filters:
-            - StripPrefix=1
+          filters: []
 
       discovery:
         locator:
