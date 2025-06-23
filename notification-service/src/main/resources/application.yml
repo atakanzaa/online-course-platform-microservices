@@ -108,7 +108,7 @@ spring:
             trust: smtp.gmail.com
 
 server:
-  port: ${PORT:8086}
+  port: ${PORT:8080}
   servlet:
     context-path: /notification-service
 

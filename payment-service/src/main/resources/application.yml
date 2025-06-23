@@ -93,7 +93,7 @@ spring:
         spring.json.trusted.packages: "*"
 
 server:
-  port: ${PORT:8083}
+  port: ${PORT:8080}
   servlet:
     context-path: /payment-service
 
