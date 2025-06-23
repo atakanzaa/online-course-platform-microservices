@@ -26,9 +26,7 @@ RUN ./mvnw clean package -DskipTests
 # Expose port expected by Cloud Run
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8081/actuator/health || exit 1
-
-# Run the application
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=$PORT -jar $(ls target/*.jar | head -n 1)"]
+# Simple ENTRYPOINT - let Spring Boot handle PORT env variable  
+# Copy the built jar to a predictable location
+RUN cp target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]

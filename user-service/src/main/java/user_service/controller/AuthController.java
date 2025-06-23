@@ -2,6 +2,7 @@ package user_service.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import user_service.dto.AuthResponse;
@@ -13,10 +14,15 @@ import user_service.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
     private final UserService userService;
-    private final OAuth2Service oauth2Service;
+    
+    @Autowired(required = false)
+    private OAuth2Service oauth2Service;
+    
+    public AuthController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -30,6 +36,9 @@ public class AuthController {
     
     @PostMapping("/oauth2/google")
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody OAuth2LoginRequest request) {
+        if (oauth2Service == null) {
+            throw new RuntimeException("OAuth2 service is not configured");
+        }
         return ResponseEntity.ok(oauth2Service.googleLogin(request));
     }
 }
