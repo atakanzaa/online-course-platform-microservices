@@ -2,19 +2,20 @@ package notification_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Service;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import notification_service.event.PaymentSuccessEvent;
 
-@Service
+@RestController
+@RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentEventConsumer {
 
     private final NotificationService notificationService;
 
-    @KafkaListener(topics = "payment-success", groupId = "notification-service")
-    public void handlePaymentSuccessEvent(PaymentSuccessEvent event) {
+    @PostMapping("/payment-success")
+    public ResponseEntity<String> handlePaymentSuccessEvent(@RequestBody PaymentSuccessEvent event) {
         try {
             log.info("Received payment success event for payment: {}", event.getPaymentId());
             
@@ -38,9 +39,11 @@ public class PaymentEventConsumer {
             );
             
             log.info("Payment success notification sent for user: {}", event.getUserId());
+            return ResponseEntity.ok("Notification sent successfully");
             
         } catch (Exception e) {
             log.error("Failed to process payment success event: {}", event.getPaymentId(), e);
+            return ResponseEntity.internalServerError().body("Failed to send notification: " + e.getMessage());
         }
     }
 }

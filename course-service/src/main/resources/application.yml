@@ -3,6 +3,8 @@ spring:
     name: course-service
   profiles:
     active: dev
+  config:
+    import: "optional:configserver:"
 
 ---
 # Development Profile (H2)
@@ -130,6 +132,8 @@ management:
   health:
     rabbit:
       enabled: false  # Disable for development
+    kafka:
+      enabled: false  # Disable for Cloud Run
     diskspace:
       enabled: true
 
