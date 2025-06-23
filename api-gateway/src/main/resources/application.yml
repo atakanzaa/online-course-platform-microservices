@@ -55,7 +55,7 @@ spring:
         - id: enrollment-service
           uri: ${PAYMENT_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/api/enrollments/**
+            - Path=/api/enrollments{/**}
           filters: []
 
       discovery:
