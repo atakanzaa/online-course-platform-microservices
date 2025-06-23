@@ -8,6 +8,7 @@ substitutions:
   _REG: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}'
   _TAG: '$SHORT_SHA'
   _SERVICES: 'api-gateway,user-service,course-service,media-service,payment-service,notification-service'
+  _FRONTEND: 'frontend'
   _ENV: 'dev'
 
 options:
@@ -31,6 +32,20 @@ steps:
         docker push "${_REG}/${svc}:${_TAG}"
       done
 
+# Build and push frontend
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build & Push Frontend'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      set -e
+      echo "---- Building Frontend ----"
+      docker build -t "${_REG}/${_FRONTEND}:${_TAG}" \
+        --build-arg REACT_APP_API_URL="https://api-gateway-${_ENV}-6ickcylaeq-ey.a.run.app/api" \
+        "${_FRONTEND}"
+      docker push "${_REG}/${_FRONTEND}:${_TAG}"
+
 # Deploy each service to Cloud Run with environment suffix
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'Deploy Cloud Run'
@@ -51,10 +66,29 @@ steps:
           --update-env-vars "SPRING_PROFILES_ACTIVE=${_ENV},SERVER_PORT=8080"
       done
 
+# Deploy frontend to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: 'Deploy Frontend'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      set -e
+      gcloud config set run/region ${_REGION}
+      FRONTEND_NAME="${_FRONTEND}-${_ENV}"
+      echo "---- Deploying $$FRONTEND_NAME ----"
+      # API Gateway URL will be manually updated after getting the actual URL
+      gcloud run deploy "$$FRONTEND_NAME" \
+        --image "${_REG}/${_FRONTEND}:${_TAG}" \
+        --platform managed \
+        --allow-unauthenticated \
+        --port 8080
+
 images:
   - '${_REG}/api-gateway:${_TAG}'
   - '${_REG}/user-service:${_TAG}'
   - '${_REG}/course-service:${_TAG}'
   - '${_REG}/media-service:${_TAG}'
   - '${_REG}/payment-service:${_TAG}'
-  - '${_REG}/notification-service:${_TAG}' 
+  - '${_REG}/notification-service:${_TAG}'
+  - '${_REG}/frontend:${_TAG}' 
