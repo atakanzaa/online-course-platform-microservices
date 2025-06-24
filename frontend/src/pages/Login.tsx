@@ -149,7 +149,6 @@ const Login: React.FC = () => {
             </button>
           </div>            <div className="mt-6">
               <GoogleLoginButton
-                roleSelection="STUDENT"
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
               />
