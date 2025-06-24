@@ -17,6 +17,21 @@ export interface UpdateUserRoleRequest {
   role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
 }
 
+export interface CreateInstructorRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  username?: string;
+}
+
+export interface DashboardStats {
+  totalUsers: number;
+  totalStudents: number;
+  totalInstructors: number;
+  totalAdmins: number;
+}
+
 export interface PaginatedResponse<T> {
   content: T[];
   totalElements: number;
@@ -67,19 +82,16 @@ export const adminService = {
   deleteUser: async (userId: number): Promise<void> => {
     await api.delete(`/admin/users/${userId}`);
   },
-  // Get dashboard statistics
-  getDashboardStats: async () => {
-    const [teachers, students, allUsers] = await Promise.all([
-      adminService.getAllTeachers(),
-      adminService.getAllStudents(),
-      adminService.getAllUsers(0, 1)
-    ]);
 
-    return {
-      totalUsers: allUsers.totalElements,
-      totalInstructors: teachers.length,
-      totalStudents: students.length,
-      totalAdmins: 0, // This would need to be calculated on backend
-    };
+  // Create instructor account
+  createInstructor: async (request: CreateInstructorRequest): Promise<User> => {
+    const response = await api.post<User>('/admin/instructors', request);
+    return response.data;
+  },
+
+  // Get dashboard statistics
+  getDashboardStats: async (): Promise<DashboardStats> => {
+    const response = await api.get<DashboardStats>('/admin/dashboard/stats');
+    return response.data;
   }
 };

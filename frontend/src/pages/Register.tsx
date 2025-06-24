@@ -9,8 +9,7 @@ const Register: React.FC = () => {  const [formData, setFormData] = useState({
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    role: 'STUDENT' as 'STUDENT' | 'INSTRUCTOR'
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -77,8 +76,7 @@ const Register: React.FC = () => {  const [formData, setFormData] = useState({
         formData.firstName.trim(),
         formData.lastName.trim(),
         formData.email.toLowerCase().trim(),
-        formData.password,
-        formData.role
+        formData.password
       );
       
       // Registration successful - redirect to dashboard
@@ -305,25 +303,6 @@ const Register: React.FC = () => {  const [formData, setFormData] = useState({
                 <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
               )}
             </div>
-
-            {/* Role Selection */}
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                I want to register as
-              </label>
-              <div className="mt-1">
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'STUDENT' | 'INSTRUCTOR' }))}
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                >
-                  <option value="STUDENT">Student - Learn from courses</option>
-                  <option value="INSTRUCTOR">Instructor - Create and teach courses</option>
-                </select>
-              </div>
-            </div>
           </div>
 
           <div>
@@ -346,7 +325,6 @@ const Register: React.FC = () => {  const [formData, setFormData] = useState({
             </button>
           </div>          <div className="mt-6">
             <GoogleLoginButton
-              roleSelection={formData.role}
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
             />

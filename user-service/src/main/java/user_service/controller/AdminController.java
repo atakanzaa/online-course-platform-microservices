@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import user_service.dto.RegisterRequest;
 import user_service.dto.UpdateUserRoleRequest;
 import user_service.dto.UserDto;
 import user_service.entity.Role;
@@ -79,5 +80,21 @@ public class AdminController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
         adminService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+    
+    /**
+     * Create instructor account
+     */
+    @PostMapping("/instructors")
+    public ResponseEntity<UserDto> createInstructor(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(adminService.createInstructor(request));
+    }
+    
+    /**
+     * Get dashboard statistics
+     */
+    @GetMapping("/dashboard/stats")
+    public ResponseEntity<?> getDashboardStats() {
+        return ResponseEntity.ok(adminService.getDashboardStats());
     }
 }

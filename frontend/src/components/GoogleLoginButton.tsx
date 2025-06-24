@@ -2,13 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface GoogleLoginButtonProps {
-  roleSelection?: 'STUDENT' | 'INSTRUCTOR';
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
 
 const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ 
-  roleSelection = 'STUDENT', 
   onSuccess, 
   onError 
 }) => {

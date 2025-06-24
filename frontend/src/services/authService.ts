@@ -11,7 +11,6 @@ export interface RegisterRequest {
   lastName: string;
   email: string;
   password: string;
-  role?: 'STUDENT' | 'INSTRUCTOR';
 }
 
 export interface AuthResponse {

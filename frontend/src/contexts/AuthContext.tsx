@@ -5,7 +5,7 @@ import { authService } from '../services/authService';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (firstName: string, lastName: string, email: string, password: string, role?: 'STUDENT' | 'INSTRUCTOR') => Promise<void>;
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -97,20 +97,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
-  const register = async (
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-    role: 'STUDENT' | 'INSTRUCTOR' = 'STUDENT'
-  ) => {
+  const register = async (firstName: string, lastName: string, email: string, password: string) => {
     try {
       const response = await authService.register({
         firstName,
         lastName,
         email,
         password,
-        role,
       });
       
       // Create user object from response

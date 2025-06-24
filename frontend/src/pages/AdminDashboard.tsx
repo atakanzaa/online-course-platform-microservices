@@ -11,28 +11,44 @@ import {
   UserX,
   Search,
   Filter,
-  Plus
+  Plus,
+  Eye,
+  EyeOff,
+  AlertCircle
 } from 'lucide-react';
-import { adminService, User, PaginatedResponse } from '../services/adminService';
+import { adminService, User, PaginatedResponse, CreateInstructorRequest, DashboardStats } from '../services/adminService';
 import { useAuth } from '../contexts/AuthContext';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'instructors' | 'students'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'instructors' | 'students' | 'create-instructor'>('overview');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<'ALL' | 'STUDENT' | 'INSTRUCTOR' | 'ADMIN'>('ALL');
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalInstructors: 0,
     totalStudents: 0,
     totalAdmins: 0
   });
+  
+  // Instructor creation form state
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createFormData, setCreateFormData] = useState<CreateInstructorRequest>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    username: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -105,6 +121,49 @@ const AdminDashboard: React.FC = () => {
   const handleRoleFilter = (role: 'ALL' | 'STUDENT' | 'INSTRUCTOR' | 'ADMIN') => {
     setSelectedRole(role);
     setCurrentPage(0); // Reset to first page when changing filter
+  };
+
+  const handleCreateInstructor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!createFormData.firstName || !createFormData.lastName || !createFormData.email || !createFormData.password) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      setError(null);
+      
+      await adminService.createInstructor(createFormData);
+      
+      setSuccessMessage('Instructor created successfully!');
+      setCreateFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        username: ''
+      });
+      setShowCreateForm(false);
+      
+      // Refresh data
+      await fetchUsers();
+      await fetchDashboardStats();
+      
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Failed to create instructor');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCreateFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
   const getFilteredUsers = () => {
@@ -228,23 +287,36 @@ const AdminDashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm mb-8">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-              {['overview', 'users', 'instructors', 'students'].map((tab) => (
+              {[
+                { key: 'overview', label: 'Overview' },
+                { key: 'users', label: 'Users' },
+                { key: 'instructors', label: 'Instructors' },
+                { key: 'students', label: 'Students' },
+                { key: 'create-instructor', label: 'Create Instructor' }
+              ].map((tab) => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab as any)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-                    activeTab === tab
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as any)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === tab.key
                       ? 'border-primary-500 text-primary-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  {tab}
+                  {tab.label}
                 </button>
               ))}
             </nav>
           </div>
 
           <div className="p-6">
+            {/* Success Message */}
+            {successMessage && (
+              <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
+                <div className="text-sm text-green-700">{successMessage}</div>
+              </div>
+            )}
+
             {activeTab === 'overview' && (
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">System Overview</h3>
@@ -411,6 +483,129 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-gray-600">
                   Use the "Users" tab to manage all user roles, including {activeTab}.
                 </p>
+              </div>
+            )}
+
+            {activeTab === 'create-instructor' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-medium text-gray-900">Create New Instructor</h3>
+                </div>
+
+                <div className="max-w-md">
+                  <form onSubmit={handleCreateInstructor} className="space-y-4">
+                    <div>
+                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        value={createFormData.firstName}
+                        onChange={handleFormChange}
+                        required
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        value={createFormData.lastName}
+                        onChange={handleFormChange}
+                        required
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={createFormData.email}
+                        onChange={handleFormChange}
+                        required
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                        Username (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        value={createFormData.username}
+                        onChange={handleFormChange}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="Will use email if not provided"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        Password
+                      </label>
+                      <div className="mt-1 relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          id="password"
+                          name="password"
+                          value={createFormData.password}
+                          onChange={handleFormChange}
+                          required
+                          className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        />
+                        <button
+                          type="button"
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5 text-gray-400" />
+                          ) : (
+                            <Eye className="h-5 w-5 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-4">
+                      <button
+                        type="submit"
+                        disabled={isCreating}
+                        className="flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCreating ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Instructor
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
           </div>
