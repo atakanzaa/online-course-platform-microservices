@@ -134,7 +134,7 @@ const Home: React.FC = () => {
             </div>
           ) : (
             <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredCourses.slice(0, 6).map((course) => (
+              {(featuredCourses || []).slice(0, 6).map((course) => (
                 <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">                        <img
                           className="h-48 w-full object-cover"
                           src={course.thumbnailUrl || '/placeholder-course.jpg'}
